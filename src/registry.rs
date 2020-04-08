@@ -1,7 +1,7 @@
 use crate::metrics::Metric;
 
 pub struct Registry {
-    metrics: Vec<Metric>,
+    pub metrics: Vec<Metric>,
 }
 
 impl Registry {
