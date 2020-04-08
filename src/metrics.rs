@@ -63,4 +63,17 @@ impl Metric {
             .map(|label| format!("{key}=\"{value}\"", key = label.key, value = label.value))
             .join(",")
     }
+
+    pub fn dummy() -> Self {
+        Self {
+            name: String::from("foo"),
+            help: String::from("It's a foo!"),
+            kind: MetricType::Gauge,
+            value: 700.0,
+            labels: vec![Label {
+                key: String::from("foo"),
+                value: String::from("bar"),
+            }],
+        }
+    }
 }

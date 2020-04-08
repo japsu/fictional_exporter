@@ -1,16 +1,21 @@
+use juniper::{EmptyMutation, Variables};
+
+mod graphql;
 mod metrics;
-use metrics::{Label, Metric, MetricType};
+mod registry;
+use graphql::{Context, Query, Schema};
 
 fn main() {
-    let metric = Metric {
-        name: String::from("foo"),
-        help: String::from("It's a foo!"),
-        kind: MetricType::Gauge,
-        value: 700.0,
-        labels: vec![Label {
-            key: String::from("foo"),
-            value: String::from("bar"),
-        }],
-    };
-    println!("{}", metric.to_prometheus());
+    let context = Context;
+
+    let (res, _errors) = juniper::execute(
+        "query { dummyMetric { name, value } }",
+        None,
+        &Schema::new(Query, EmptyMutation::new()),
+        &Variables::new(),
+        &context,
+    )
+    .unwrap();
+
+    println!("{:?}", res.as_object_value().unwrap())
 }
