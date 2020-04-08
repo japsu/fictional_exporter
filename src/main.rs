@@ -25,12 +25,10 @@ async fn main() {
         state.boxed(),
     );
 
-    warp::serve(
-        warp::get2()
-            .and(warp::path("graphiql"))
-            .and(juniper_warp::graphiql_filter("/graphql"))
-            .or(warp::path("graphql").and(graphql_filter))
-            .with(log),
-    )
-    .run(([127, 0, 0, 1], 8080))
+    let graphiql = warp::get2()
+        .and(warp::path("graphiql"))
+        .and(juniper_warp::graphiql_filter("/graphql"));
+    let graphql = warp::path("graphql").and(graphql_filter);
+
+    warp::serve(graphiql.or(graphql).with(log)).run(([127, 0, 0, 1], 8080))
 }
