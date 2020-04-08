@@ -1,0 +1,12 @@
+version: '3.7'
+
+networks:
+  default: {}
+
+services:
+  fictional_exporter:
+    image: rust:1.42
+    command: cargo run
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app

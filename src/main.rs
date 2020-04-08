@@ -1,8 +1,8 @@
-use im::ordmap::OrdMap;
-use serde::{Deserialize, Serialize};
+use itertools::Itertools;
+use juniper::{GraphQLEnum, GraphQLObject};
 use std::fmt;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(GraphQLEnum, Debug)]
 enum MetricType {
     Counter,
     Gauge,
@@ -23,46 +23,58 @@ impl fmt::Display for MetricType {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-enum MetricState {
-    Stable,
-    Meandering { target_value: f64 },
+#[derive(GraphQLObject, Debug)]
+struct Label {
+    key: String,
+    value: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Metric<'a> {
+#[derive(GraphQLObject, Debug)]
+struct Metric {
     kind: MetricType,
-    name: &'a str,
-    help: &'a str,
-    labels: OrdMap<String, String>,
-    state: MetricState,
+    name: String,
+    help: String,
+    labels: Vec<Label>,
     value: f64,
 }
 
-impl Metric<'_> {
+impl Metric {
     fn to_prometheus(&self) -> String {
-        return format!(
-            "# HELP {help}\n# TYPE {name} {kind}\n{name}{{{formatted_labels}}} {value}",
+        let mut result = String::new();
+
+        if !self.help.is_empty() {
+            result.push_str(&format!("# HELP {help}\n", help = self.help))
+        }
+
+        result.push_str(&format!(
+            "# TYPE {name} {kind}\n{name}{{{formatted_labels}}} {value}\n",
             name = self.name,
-            help = self.help,
             kind = self.kind,
-            formatted_labels = "foo = \"bar\"",
+            formatted_labels = self.formatted_labels(),
             value = self.value
-        );
+        ));
+
+        result
+    }
+
+    fn formatted_labels(&self) -> String {
+        self.labels
+            .iter()
+            .map(|label| format!("{key}=\"{value}\"", key = label.key, value = label.value))
+            .join(",")
     }
 }
 
 fn main() {
     let metric = Metric {
-        name: "foo",
-        help: "It's a foo!",
+        name: String::from("foo"),
+        help: String::from("It's a foo!"),
         kind: MetricType::Gauge,
-        labels: OrdMap::new(),
-        state: MetricState::Meandering {
-            target_value: 700.0,
-        },
         value: 700.0,
+        labels: vec![Label {
+            key: String::from("foo"),
+            value: String::from("bar"),
+        }],
     };
-    println!("{}", serde_json::to_string(&metric).unwrap());
     println!("{}", metric.to_prometheus());
 }
